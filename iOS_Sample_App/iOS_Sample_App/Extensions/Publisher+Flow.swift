@@ -9,24 +9,23 @@
 import Combine
 import Common
 
-final class Flow<P>: Kotlinx_coroutines_coreFlow where P: Publisher {
-    private let values: AsyncThrowingPublisher<P>
-
-    init(publisher: P) {
-        values = publisher.values
-    }
-
-    @MainActor
-    func collect(collector: any Kotlinx_coroutines_coreFlowCollector) async throws {
-        for try await value in values {
-            try await collector.emit(value: value)
+extension Publisher where Output: AnyObject {
+    var flow: MultiplatformFlow<Output> {
+        var cancellable: AnyCancellable?
+        return MultiplatformCallbackFlow<Output> { scope in
+            cancellable = sink { completion in
+                switch completion {
+                case let .failure(error):
+                    scope.cancel(exception: KotlinCancellationException(message: error.localizedDescription))
+                case .finished:
+                    scope.close()
+                }
+            } receiveValue: { value in
+                scope.trySend(value: value)
+            }
+        } unsubscribe: {
+            cancellable?.cancel()
+            cancellable = nil
         }
     }
 }
-
-extension Publisher {
-    var flow: Flow<Self> {
-        Flow(publisher: self)
-    }
-}
-
