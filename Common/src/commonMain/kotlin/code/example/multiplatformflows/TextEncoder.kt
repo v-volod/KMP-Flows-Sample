@@ -4,9 +4,11 @@ import kotlinx.coroutines.flow.map
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-class TextEncoder(rawText: Flow<String>) {
+data class TextString(val body: String)
+
+class TextEncoder(rawText: Flow<TextString>) {
     @OptIn(ExperimentalEncodingApi::class)
-    val encodedText: Flow<String> = rawText.map { text ->
-        Base64.encode(text.encodeToByteArray())
+    val encodedText: Flow<TextString> = rawText.map { text ->
+        TextString(Base64.encode(text.body.encodeToByteArray()))
     }
 }
