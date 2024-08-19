@@ -17,8 +17,10 @@ final class ContentViewModel: ObservableObject {
     private var encodedTextSubscription: AnyCancellable?
 
     init() {
-        let textEncoder = TextEncoder(rawText: $rawText.flow)
-        encodedTextSubscription = Publishers.FlowCollector(flow: textEncoder.encodedText)
+        let textEncoder = TextEncoder(rawText: $rawText.map(TextString.init(body:)).flow)
+        encodedTextSubscription = Publishers.FlowCollector<TextString, Error>(flow: textEncoder.encodedText)
+            .map(\.body)
+            .catch { _ in Empty() }
             .receive(on: DispatchQueue.main)
             .assign(to: \.encodedText, on: self)
     }
