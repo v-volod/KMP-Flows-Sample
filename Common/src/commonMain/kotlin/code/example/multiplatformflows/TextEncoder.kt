@@ -6,11 +6,12 @@ import kotlinx.coroutines.flow.map
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-data class TextString(val body: String)
+data class RawText(val body: String)
+data class EncodedText(val value: String)
 
-class TextEncoder(rawText: MultiplatformFlow<TextString>) {
+class TextEncoder(rawText: MultiplatformFlow<RawText>) {
     @OptIn(ExperimentalEncodingApi::class)
-    val encodedText: MultiplatformFlow<TextString> = rawText.map { text ->
-        TextString(Base64.encode(text.body.encodeToByteArray()))
+    val encodedText: MultiplatformFlow<EncodedText> = rawText.map { text ->
+        EncodedText(Base64.encode(text.body.encodeToByteArray()))
     }.multiplatform()
 }
