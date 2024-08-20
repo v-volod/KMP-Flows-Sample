@@ -13,7 +13,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import code.example.multiplatformflows.TextEncoder
-import code.example.multiplatformflows.TextString
+import code.example.multiplatformflows.RawText
 import code.example.multiplatformflows.flow.multiplatform
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +43,7 @@ class ContentViewModel : ViewModel() {
     private val _encodedText = MutableStateFlow("")
     val encodedText: StateFlow<String> = _encodedText
 
-    private val textEncoder = TextEncoder(rawText = _rawText.map { TextString(it) }.multiplatform())
+    private val textEncoder = TextEncoder(rawText = _rawText.map { RawText(it) }.multiplatform())
 
     init {
         collectEncodedText()
@@ -52,7 +52,7 @@ class ContentViewModel : ViewModel() {
     private fun collectEncodedText() {
         viewModelScope.launch {
             textEncoder.encodedText.collect { encoded ->
-                _encodedText.value = encoded.body
+                _encodedText.value = encoded.value
             }
         }
     }
