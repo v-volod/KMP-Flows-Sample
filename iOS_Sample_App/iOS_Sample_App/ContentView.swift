@@ -1,16 +1,22 @@
 import SwiftUI
+import Combine
 import Common
 
 struct ContentView: View {
-	let greet = Greeting().greet()
-
-	var body: some View {
-		Text(greet)
-	}
+    @StateObject private var viewModel = ContentViewModel()
+    
+    var body: some View {
+        VStack {
+            TextField("Enter text to encode", text: $viewModel.rawText)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+            Text("Encoded Text: \(viewModel.encodedText)")
+                .padding()
+        }
+        .padding()
+    }
 }
 
-struct ContentView_Previews: PreviewProvider {
-	static var previews: some View {
-		ContentView()
-	}
+#Preview {
+    ContentView()
 }
