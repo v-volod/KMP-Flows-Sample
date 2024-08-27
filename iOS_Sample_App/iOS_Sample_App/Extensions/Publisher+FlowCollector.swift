@@ -9,11 +9,18 @@
 import Common
 import Combine
 
-extension Publishers {
-    final class FlowCollector<Output, Failure>: Publisher where Failure: Error {
-        private let flow: Kotlinx_coroutines_coreFlow
+struct FlowError: LocalizedError {
+    let throwable: KotlinThrowable
 
-        init(flow: Kotlinx_coroutines_coreFlow) {
+    var errorDescription: String? { throwable.message }
+}
+
+extension Publishers {
+    final class FlowCollector<Output: AnyObject>: Publisher {
+        typealias Failure = FlowError
+        private let flow: MultiplatformFlow<Output>
+
+        init(flow: MultiplatformFlow<Output>) {
             self.flow = flow
         }
         
@@ -25,21 +32,12 @@ extension Publishers {
     }
 }
 
-fileprivate final class FlowCollectorSubscription<S>: Subscription, Kotlinx_coroutines_coreFlowCollector where S: Subscriber {
-    struct TypeCastError: LocalizedError {
-        let receivedType: Any.Type
-        let expectedType: Any.Type
-
-        var errorDescription: String? {
-            "Failed to cast value of type \(receivedType) to expected type \(expectedType)."
-        }
-    }
-
+fileprivate final class FlowCollectorSubscription<S>: Subscription where S: Subscriber, S.Input: AnyObject, S.Failure == FlowError {
     var subscriber: S?
-    let flow: Kotlinx_coroutines_coreFlow
-    var collectionTask: Task<Void, Never>?
+    let flow: MultiplatformFlow<S.Input>
+    var job: Kotlinx_coroutines_coreJob?
 
-    init(subscriber: S?, flow: Kotlinx_coroutines_coreFlow) {
+    init(subscriber: S?, flow: MultiplatformFlow<S.Input>) {
         self.subscriber = subscriber
         self.flow = flow
     }
@@ -47,30 +45,20 @@ fileprivate final class FlowCollectorSubscription<S>: Subscription, Kotlinx_coro
     func request(_ demand: Subscribers.Demand) { }
 
     func collect() {
-        collectionTask = .detached { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                try await flow.collect(collector: self)
-            } catch {
-                if let error = error as? S.Failure {
-                    subscriber?.receive(completion: .failure(error))
-                } else {
-                    subscriber?.receive(completion: .finished)
-                }
+        job = flow.launchCollect { [weak self] value in
+            _ = self?.subscriber?.receive(value)
+        } onCompletion: { [weak self] error in
+            if let error = error {
+                self?.subscriber?.receive(completion: .failure(FlowError(throwable: error)))
+            } else {
+                self?.subscriber?.receive(completion: .finished)
             }
         }
     }
     
     func cancel() {
-        collectionTask?.cancel()
-        collectionTask = nil
+        job?.cancel(cause: nil)
+        job = nil
         subscriber = nil
-    }
-
-    func emit(value: Any?) async throws {
-        guard let expectedValue = value as? S.Input else {
-            throw TypeCastError(receivedType: type(of: value), expectedType: S.Input.self)
-        }
-        _ = subscriber?.receive(expectedValue)
     }
 }

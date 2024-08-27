@@ -18,10 +18,10 @@ final class ContentViewModel: ObservableObject {
 
     init() {
         let textEncoder = TextEncoder(rawText: $rawText.map(TextString.init(body:)).flow)
-        encodedTextSubscription = Publishers.FlowCollector<TextString, Error>(flow: textEncoder.encodedText)
-            .map(\.body)
-            .catch { _ in Empty() }
+        encodedTextSubscription = Publishers.FlowCollector(flow: textEncoder.encodedText)
             .receive(on: DispatchQueue.main)
+            .map(\.body)
+            .catch({ _ in Empty() })
             .assign(to: \.encodedText, on: self)
     }
 }
