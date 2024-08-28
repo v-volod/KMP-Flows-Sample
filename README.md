@@ -29,3 +29,9 @@ This repository contains a complete sample project demonstrating Kotlin Multipla
 
 - **Kotlin Flows to Swift Combine**: See how to convert Kotlin Flows to Swift Combine Publishers and vice versa.
 - **Type-Safe Implementation**: Learn about the custom wrappers that maintain type safety across platforms.
+
+## Learn More
+
+For a detailed explanation of the concepts and implementation in this project, check out the accompanying articles:
+- [Kotlin Flow to Swift Combine: A KMP Bridge. Part I](https://medium.com/snapp-mobile/kotlin-flow-to-swift-combine-a-kmp-bridge-part-i-6332bbfcad5d)
+- [Kotlin Flow to Swift Combine: A KMP Bridge. Part II](https://medium.com/snapp-mobile/kotlin-flow-to-swift-combine-a-kmp-bridge-part-ii-bf3ecdd3767f)
